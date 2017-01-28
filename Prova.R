@@ -7,8 +7,8 @@ myFunction <- function(inputFile, organism, outputFile){
 controls <- function(control1, control2, control3){ 
   errs <- 'Errore: '
   counter <- 0
-  if(is.null(control1) || tools::file_ext(control1) != 'txt'){
-    errs <- paste(errs, 'specificare come primo parametro un file di input di tipo txt, ')
+  if(file.exists(control1) || tools::file_ext(control1) != 'txt'){
+    errs <- paste(errs, 'il file ', control1, 'non esiste o non è di tipo .txt')
     counter <- 1
   }
   if(is.null(control2) || control2 != "Uomo" && control2 != "Topo" && control2 != "Ratto"){
