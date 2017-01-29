@@ -1,24 +1,11 @@
 #La funzione myFunction fa da main allo script
-myFunction <- function(inputFile, organism, outputFile){
-  controls(inputFile, organism, outputFile)
+myFunction <- function(){
+  library('tcltk')
+  input <- tclvalue(tkgetOpenFile(filetypes = "{ {Text Files} {.txt} }"))
+  stopifnot(input != "")
 }
 
-#La funzione controls controlla che gli input dati dall'utente siano corretti
-controls <- function(control1, control2, control3){ 
-  errs <- 'Errore: '
-  counter <- 0
-  if(!file.exists(control1) || tools::file_ext(control1) != 'txt'){
-    errs <- paste(errs, 'il file ', control1, 'non esiste o non è di tipo .txt')
-    counter <- 1
-  }
-  if(is.null(control2) || control2 != "Uomo" && control2 != "Topo" && control2 != "Ratto"){
-    errs <- paste(errs, control2, " è un input invalido, scegliere un organismo tra Uomo, Topo o Ratto")
-    counter <- 1
-  }
-  if(counter == 1){
-    stop(errs)
-  }
-}
+myFunction()
 
 
   library('GEOquery')
