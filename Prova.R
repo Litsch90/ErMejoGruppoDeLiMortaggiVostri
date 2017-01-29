@@ -1,36 +1,43 @@
-#Seleziona il file di input dalla lista di file disponibili
+#Seleziona il file di input dalla lista di file disponibili e lo ritorna
 select <- function(){
-  tkmessageBox(message="Select the input file")
-  input <- tclvalue(tkgetOpenFile(filetypes = "{ {Text Files} {.txt} }"))
+  input <- tclvalue(tkgetOpenFile(title="Selezionare il file di input", filetypes = "{ {Text Files} {.txt} }"))
   stopifnot(input != "")
   return(input)
 }
 
-#Crea una radiobuttons con le razze da selezionare
+#Crea una fiestra con tre radiobutton per selezionare una specie tra uomo, topo e ratto, poi passa il valore selezionato alla funzione cerca (default "human")
 radio <- function(){
-  tt <- tktoplevel()
-  rb1 <- tkradiobutton(tt)
-  rb2 <- tkradiobutton(tt)
-  rb3 <- tkradiobutton(tt)
-  rbValue <- ""
+  inputBox <- tktoplevel()
+  rb1 <- tkradiobutton(inputBox)
+  rb2 <- tkradiobutton(inputBox)
+  rb3 <- tkradiobutton(inputBox)
+  rbValue <- tclVar("human")
   tkconfigure(rb1,variable=rbValue,value="human")
   tkconfigure(rb2,variable=rbValue,value="mouse")
   tkconfigure(rb3,variable=rbValue,value="rat")
-  tkgrid(tklabel(tt,text="Which spece you want to analize?"))
-  tkgrid(tklabel(tt,text="Human "),rb1)
-  tkgrid(tklabel(tt,text="Mouse "),rb2)
-  tkgrid(tklabel(tt,text="Rat "),rb3)
+  tkgrid(tklabel(inputBox,text="Which spece you want to analize?"))
+  tkgrid(tklabel(inputBox,text="Human "),rb1)
+  tkgrid(tklabel(inputBox,text="Mouse "),rb2)
+  tkgrid(tklabel(inputBox,text="Rat "),rb3)
   
+  #Una volta premuto il tasto ok dalla finestra di dialogo, invia il valore selezionato ad un'altra funzione
   onOK <- function(){
     rbVal <- as.character(tclvalue(rbValue))
-    tkdestroy(tt)
-    cerca(rbVal)
+    tkdestroy(inputBox)
+    cat(rbVal)
+    #cerca(rbVal)
   }
   
-  OK.but <- tkbutton(tt,text="OK",command=onOK)
+  OK.but <- tkbutton(inputBox,text="OK",command=onOK)
   tkgrid(OK.but)
-  tkfocus(tt)
+  tkfocus(inputBox)
 }
+
+
+#Qua iniziano i comandi che vengono eseguiti appena lanciato lo script
+library('tcltk')
+input <- select()
+radio()
 
 #Questa funzione è da finire
 cerca <- function(specie){
@@ -46,10 +53,6 @@ cerca <- function(specie){
   gse <- dbGetQuery(con,"SELECT DISTINCT gse FROM gse WHERE title LIKE '%human%' AND title LIKE '%breast%' AND title LIKE '%cancer%';")
 }
 
-#Qua iniziano i comandi che vengono eseguiti appena lanciato lo script
-library('tcltk')
-input <- select()
-radio()
 
 
 
