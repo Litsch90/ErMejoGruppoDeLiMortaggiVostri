@@ -19,6 +19,7 @@ radio <- function(){
   tkgrid(tklabel(inputBox,text="Human "),rb1)
   tkgrid(tklabel(inputBox,text="Mouse "),rb2)
   tkgrid(tklabel(inputBox,text="Rat "),rb3)
+  #prova
   
   #Una volta premuto il tasto ok dalla finestra di dialogo, invia il valore selezionato ad un'altra funzione
   onOK <- function(){
