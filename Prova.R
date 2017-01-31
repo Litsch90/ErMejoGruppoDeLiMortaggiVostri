@@ -1,6 +1,6 @@
 #Seleziona il file di input dalla lista di file disponibili e lo ritorna
 select <- function(){
-  input <- tclvalue(tkgetOpenFile(title="Selezionare il file di input", filetypes = "{ {Text Files} {.txt} }"))
+  input <- tclvalue(tkgetOpenFile(title="Selezionare il file di input", filetypes = "{ {Text Files} {.csv} }"))
   if(input == ""){
     
   }
@@ -25,8 +25,8 @@ cerca <- function(specie, key){
              "  JOIN gpl ON gse_gpl.gpl=gpl.gpl",
              "WHERE", 
             " gpl.organism LIKE '%", specie, "%' AND",
-            " gse.title LIKE '%", key, "%' OR",
-            " gse.summary LIKE '%", key, "%';")
+            " (gse.title LIKE '%", key, "%' OR",
+            " gse.summary LIKE '%", key, "%');")
   gsm <- dbGetQuery(con, query)
   return(gsm)
   gse <- dbGetQuery(con,"SELECT DISTINCT gse FROM gse WHERE title LIKE '%human%' AND title LIKE '%breast%' AND title LIKE '%cancer%';")
@@ -65,7 +65,7 @@ rbVal <- ""
 result <- ""
 output1 <- file.create(paste("Prova_", format(Sys.time(), format="%Y-%m-%d%H%M"), ".txt"))
 input <- select()
-inputArray <- read.table(input)
+inputArray <- read.table(input, sep = ",")
 radio()
 for (counter in inputArray){
 	result <- c(result, cerca(rbVal, inputArray[counter]))
