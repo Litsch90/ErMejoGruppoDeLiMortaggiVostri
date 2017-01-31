@@ -1,6 +1,6 @@
 #Seleziona il file di input dalla lista di file disponibili e lo ritorna
 select <- function(){
-  input <- tclvalue(tkgetOpenFile(title="Selezionare il file di input", filetypes = "{ {Text Files} {.csv} }"))
+  input <- tclvalue(tkgetOpenFile(title="Selezionare il file di input", filetypes = "{ {Text Files} {.txt} }"))
   if(input == ""){
     
   }
@@ -17,16 +17,16 @@ cerca <- function(specie, key){
   con <- dbConnect(SQLite(),'GEOmetadb.sqlite')
   geo_tables <- dbListTables(con)
   query <-paste("
-    SELECT count(*) ",
-    "FROM",
-             "  gsm JOIN gse_gsm ON gsm.gsm=gse_gsm.gsm",
-             "  JOIN gse ON gse_gsm.gse=gse.gse",
-             "  JOIN gse_gpl ON gse_gpl.gse=gse.gse",
-             "  JOIN gpl ON gse_gpl.gpl=gpl.gpl",
-             "WHERE", 
-            " gpl.organism LIKE '%", specie, "%' AND",
-            " (gse.title LIKE '%", key, "%' OR",
-            " gse.summary LIKE '%", key, "%');")
+                SELECT count(*) ",
+                "FROM",
+                "  gsm JOIN gse_gsm ON gsm.gsm=gse_gsm.gsm",
+                "  JOIN gse ON gse_gsm.gse=gse.gse",
+                "  JOIN gse_gpl ON gse_gpl.gse=gse.gse",
+                "  JOIN gpl ON gse_gpl.gpl=gpl.gpl",
+                "WHERE", 
+                " gpl.organism LIKE '", specie, "' AND",
+                " gse.title LIKE '%", key, "%' OR",
+                " gse.summary LIKE '%", key, "%';")
   gsm <- dbGetQuery(con, query)
   return(gsm)
   gse <- dbGetQuery(con,"SELECT DISTINCT gse FROM gse WHERE title LIKE '%human%' AND title LIKE '%breast%' AND title LIKE '%cancer%';")
@@ -38,10 +38,10 @@ radio <- function(){
   rb1 <- tkradiobutton(inputBox)
   rb2 <- tkradiobutton(inputBox)
   rb3 <- tkradiobutton(inputBox)
-  rbValue <- tclVar("human")
-  tkconfigure(rb1,variable=rbValue,value="human")
-  tkconfigure(rb2,variable=rbValue,value="mouse")
-  tkconfigure(rb3,variable=rbValue,value="rat")
+  rbValue <- tclVar("Homo sapiens")
+  tkconfigure(rb1,variable=rbValue,value="Homo sapiens")
+  tkconfigure(rb2,variable=rbValue,value="Mus musculus")
+  tkconfigure(rb3,variable=rbValue,value="Rattus norvegicus")
   tkgrid(tklabel(inputBox,text="Which spece you want to analize?"))
   tkgrid(tklabel(inputBox,text="Human "),rb1)
   tkgrid(tklabel(inputBox,text="Mouse "),rb2)
@@ -65,18 +65,8 @@ rbVal <- ""
 result <- ""
 output1 <- file.create(paste("Prova_", format(Sys.time(), format="%Y-%m-%d%H%M"), ".txt"))
 input <- select()
-inputArray <- read.table(input, sep = ",")
+inputArray <- scan(file=input, what=character(), sep = "\n")
 radio()
 for (counter in inputArray){
-	result <- c(result, cerca(rbVal, inputArray[counter]))
+  result <- c(result, cerca(rbVal, counter))
 }
-
-
-
-
-
-
-
-  
-
-
