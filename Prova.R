@@ -68,7 +68,7 @@ input <- select()
 inputArray <- read.table(input)
 radio()
 for (counter in inputArray){
-	result <- c(result, cerca(rbVal, counter))
+	result <- c(result, cerca(rbVal, inputArray[counter]))
 }
 
 
