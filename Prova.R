@@ -7,31 +7,6 @@ select <- function(){
   return(input)
 }
 
-#Questa funzione è da finire
-cerca <- function(specie, key){
-  library('GEOquery')
-  library('GEOmetadb')
-  if(!file.exists('GEOmetadb.sqlite')){
-    getSQLiteFile()
-  }
-  con <- dbConnect(SQLite(),'GEOmetadb.sqlite')
-  geo_tables <- dbListTables(con)
-  query <-paste("
-                SELECT count(*) ",
-                "FROM",
-                "  gsm JOIN gse_gsm ON gsm.gsm=gse_gsm.gsm",
-                "  JOIN gse ON gse_gsm.gse=gse.gse",
-                "  JOIN gse_gpl ON gse_gpl.gse=gse.gse",
-                "  JOIN gpl ON gse_gpl.gpl=gpl.gpl",
-                "WHERE", 
-                " gpl.organism LIKE '", specie, "' AND",
-                " gse.title LIKE '%", key, "%' OR",
-                " gse.summary LIKE '%", key, "%';")
-  gsm <- dbGetQuery(con, query)
-  return(gsm)
-  gse <- dbGetQuery(con,"SELECT DISTINCT gse FROM gse WHERE title LIKE '%human%' AND title LIKE '%breast%' AND title LIKE '%cancer%';")
-}
-
 #Crea una fiestra con tre radiobutton per selezionare una specie tra uomo, topo e ratto, poi passa il valore selezionato alla funzione cerca (default "human")
 radio <- function(){
   inputBox <- tktoplevel()
@@ -58,15 +33,51 @@ radio <- function(){
   tkfocus(inputBox)
 }
 
+#Questa funzione è da finire
+cerca <- function(specie, key){
+  library('GEOquery')
+  library('GEOmetadb')
+  if(!file.exists('GEOmetadb.sqlite')){
+    getSQLiteFile()
+  }
+  con <- dbConnect(SQLite(),'GEOmetadb.sqlite')
+  geo_tables <- dbListTables(con)
+  query <-paste("
+                SELECT count(*) ",
+                "FROM",
+                "  gsm JOIN gse_gsm ON gsm.gsm=gse_gsm.gsm",
+                "  JOIN gse ON gse_gsm.gse=gse.gse",
+                "  JOIN gse_gpl ON gse_gpl.gse=gse.gse",
+                "  JOIN gpl ON gse_gpl.gpl=gpl.gpl",
+                "WHERE", 
+                " gpl.organism LIKE '", specie, "' AND",
+                " gse.title LIKE '%", key, "%' OR",
+                " gse.summary LIKE '%", key, "%';")
+  if(key == inputArray[1]){
+    gsm <<- as.character(dbGetQuery(con, query)) 
+  }
+  else{
+    gsm <<- as.character(c(gsm, dbGetQuery(con, query))) 
+  }
+  #gse <- dbGetQuery(con,"SELECT DISTINCT gse FROM gse WHERE title LIKE '%human%' AND title LIKE '%breast%' AND title LIKE '%cancer%';")
+}
+
+#Questa funzione scrive i risultati dello script in un file di output in un data.frame, per poi scriverli in un file di tipo csv
+writeOutput <- function(outputFile) {
+  writable <- data.frame(inputArray, gsm)
+  colnames(writable) <- c("Keywords", "Number of gsm ID")
+  write.csv(writable, outputFile)
+}
 
 #Qua iniziano i comandi che vengono eseguiti appena lanciato lo script
 library('tcltk')
 rbVal <- ""
-result <- ""
+gsm <- ""
 output1 <- file.create(paste("Prova_", format(Sys.time(), format="%Y-%m-%d%H%M"), ".txt"))
 input <- select()
-inputArray <- scan(file=input, what=character(), sep = "\n")
+inputArray <- as.character(scan(file=input, what=character(), sep = "\n"))
 radio()
 for (counter in inputArray){
-  result <- c(result, cerca(rbVal, counter))
+  cerca(rbVal, counter)
 }
+writeOutput("cazzen.csv")
