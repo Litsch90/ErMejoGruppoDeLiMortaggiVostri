@@ -37,17 +37,17 @@ radio <- function(){
     rbVal <<- tclvalue(rbValue)
     tkdestroy(inputBox)
     if(rbVal == ""){
-        writeLog("ERROR: no spece selected")
-        stop()
+      writeLog("ERROR: no spece selected")
+      stop()
     }
     else{
-        writeLog(paste("Specie:", rbVal, sep = " "))
-        for (counter in inputArray){
-            cerca(rbVal, counter)
-        }
-        writeLog("removed 'counter' variable.")
-        writeOutput(paste(outName,".csv",sep=""))
-        }
+      writeLog(paste("Specie:", rbVal, sep = " "))
+      for (counter in inputArray){
+        cerca(rbVal, counter)
+      }
+      writeLog("removed 'counter' variable.")
+      writeOutput(paste(outName,".csv",sep=""))
+    }
   }
   
   OK.but <- tkbutton(inputBox,text="OK",command=onOK)
@@ -68,56 +68,32 @@ cerca <- function(specie, key){
   writeLog(paste("created 'con' variable internal to the 'cerca' function. Specie:", specie, " chiave: ", key))
   geo_tables <- dbListTables(con)
   writeLog("created 'geo_tables' variable internal to the 'cerca' function.")
-  query1 <-paste("SELECT count(gsm.gsm) ",
-                "FROM",
-                "  gsm JOIN gse_gsm ON gsm.gsm=gse_gsm.gsm",
-                "  JOIN gse ON gse_gsm.gse=gse.gse",
-                "  JOIN gse_gpl ON gse_gpl.gse=gse.gse",
-                "  JOIN gpl ON gse_gpl.gpl=gpl.gpl",
-                "WHERE", 
-                " gpl.organism=", specie, " AND (gse.title LIKE '%", key, "%' OR gse.summary LIKE '%", key, "%');")
+  query1 <-paste("SELECT gse.gse, count(gsm.gsm)",
+                 "FROM",
+                 "  gsm JOIN gse_gsm ON gsm.gsm=gse_gsm.gsm",
+                 "  JOIN gse ON gse_gsm.gse=gse.gse",
+                 "  JOIN gse_gpl ON gse_gpl.gse=gse.gse",
+                 "  JOIN gpl ON gse_gpl.gpl=gpl.gpl",
+                 "WHERE", 
+                 " gpl.organism=", specie, " AND (gse.title LIKE '%", key, "%' OR gse.summary LIKE '%", key, "%')",
+                 " GROUP BY gse.gse;")
   writeLog("created 'query1' variable internal to the 'cerca' function.")
-  query2 <- paste("SELECT DISTINCT gse.gse ",
-                " FROM",
-                "  gsm JOIN gse_gsm ON gsm.gsm=gse_gsm.gsm",
-                "  JOIN gse ON gse_gsm.gse=gse.gse",
-                "  JOIN gse_gpl ON gse_gpl.gse=gse.gse",
-                "  JOIN gpl ON gse_gpl.gpl=gpl.gpl",
-                "WHERE", 
-                " gpl.organism=", specie, " AND (gse.title LIKE '%", key, "%' OR gse.summary LIKE '%", key, "%');")
   localGsm <- dbGetQuery(con, query1)
-  localGse <- dbGetQuery(con, query2)
+  localGsm <- data.frame (rep(key, nrow(localGsm)) ,localGsm)
+  colnames(localGsm) <- c("keyword","GSE ID","# GSM")
   if(key == inputArray[1]){
-    if(localGsm == 0){
-		gse <<- "NA"
-	}
-	else{
-		localGse <- dbGetQuery(con, query2)
-		gse <<- localGse
-	}
-    gsm <<- as.character(localGsm) 
-    
+    gsm <<- localGsm
   }
   else{
-	if(localGsm == 0){
-		gse <<- c(gse, "NA")
-	}
-	else{
-		localGse <- dbGetQuery(con, query2)
-		gse <<- c(gse, localGse)
-	}
-    gsm <<- as.character(c(gsm, localGsm))
-    
+    gsm <<- rbind(gsm, localGsm)
   }
+  
 }
 
 #Questa funzione scrive i risultati dello script in un file di output in un data.frame, per poi scriverli in un file di tipo csv
 writeOutput <- function(outputFile) {
   writeLog("created 'writeOutput' variable (function).")
-  writable <- data.frame(inputArray, gsm, as.character(gse))
-  writeLog("created 'writable' variable internal to the 'writeOutput' function.")
-  colnames(writable) <- c("Keywords", "Number of gsm ID", "gse ID")
-  write.csv(writable, outputFile)
+  write.csv(gsm, outputFile)
 }
 
 writeLog <- function(message){
@@ -142,7 +118,6 @@ writeLog("created 'input' variable.")
 writeLog(paste("Input file:",input,sep = " "))
 writeLog(paste("Output file:",paste(outName,".csv",sep=""),sep = " "))
 gsm <- ""
-gse <- ""
 writeLog("created 'gsm' variable.")
 inputArray <- as.character(scan(file=input, what=character(), sep = "\n"))
 writeLog("created 'inputArray' variable.")
