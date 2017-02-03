@@ -1,7 +1,7 @@
 entry <- function(vars, 
-                           labels = vars,
-                           title = 'Digitare il nome del file di output',
-                           prompt = NULL) {
+                  labels = vars,
+                  title = 'Digitare il nome del file di output',
+                  prompt = NULL) {
   
   stopifnot(length(vars) == length(labels))
   
@@ -80,8 +80,12 @@ select <- function(){
 
 #Crea una fiestra con tre radiobutton per selezionare una specie tra uomo, topo e ratto, poi passa il valore selezionato alla funzione cerca (default "human")
 radio <- function(){
+  done <- tclVar(0)
   writeLog("created 'radio' variable(function).")
   inputBox <- tktoplevel()
+  # Capture the event "Destroy" (e.g. Alt-F4 in Windows) and when this happens, 
+  # assign 2 to done.
+  tkbind(inputBox,"<Destroy>",function() tclvalue(done)<-2)
   writeLog("created 'inputBox' variable internal to the 'radio' function.")
   rb1 <- tkradiobutton(inputBox)
   writeLog("created 'rb1' variable internal to the 'radio' function.")
@@ -89,7 +93,7 @@ radio <- function(){
   writeLog("created 'rb2' variable internal to the 'radio' function.")
   rb3 <- tkradiobutton(inputBox)
   writeLog("created 'rb3' variable internal to the 'radio' function.")
-  rbValue <- ""
+  rbValue <- "'Homo sapiens'"
   writeLog("created 'rbValue' variable internal to the 'radio' function.")
   tkconfigure(rb1,variable=rbValue,value="'Homo sapiens'")
   tkconfigure(rb2,variable=rbValue,value="'Mus musculus'")
@@ -103,18 +107,9 @@ radio <- function(){
   onOK <- function(){
     writeLog("created 'onOK' variable (function) internal to the 'radio' function.")
     rbVal <<- tclvalue(rbValue)
-    tkdestroy(inputBox)
-    if(rbVal == ""){
-      writeLog("ERROR: no spece selected")
-      stop()
-    }
-    else{
+    if(rbVal != ""){
+	  tclvalue(done) <- 1
       writeLog(paste("Specie:", rbVal, sep = " "))
-      for (counter in inputArray){
-        cerca(rbVal, counter)
-      }
-      writeLog("removed 'counter' variable.")
-      writeOutput(paste(outName,".csv",sep=""))
     }
   }
   
@@ -122,6 +117,17 @@ radio <- function(){
   writeLog("created 'OK.but' variable internal to the 'radio' function.")
   tkgrid(OK.but)
   tkfocus(inputBox)
+  tkwait.variable(done)
+  if(tclvalue(done) != 1) {
+    writeLog("ERROR: no spece selected")
+    stop()
+  }
+  tkdestroy(inputBox)
+  for (counter in inputArray){
+        cerca(rbVal, counter)
+      }
+  writeLog("removed 'counter' variable.")
+  writeOutput(paste(outName,".csv",sep=""))
 }
 
 #Questa funzione è da finire
