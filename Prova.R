@@ -1,3 +1,71 @@
+entry <- function(vars, 
+                           labels = vars,
+                           title = 'Digitare il nome del file di output',
+                           prompt = NULL) {
+  
+  stopifnot(length(vars) == length(labels))
+  
+  # Create a variable to keep track of the state of the dialog window:
+  # done = 0; If the window is active
+  # done = 1; If the window has been closed using the OK button
+  # done = 2; If the window has been closed using the Cancel button or destroyed
+  done <- tclVar(0)
+  
+  tt <- tktoplevel()
+  tkwm.title(tt, title)	
+  entries <- character()
+  tclvars <- character()
+  
+  # Capture the event "Destroy" (e.g. Alt-F4 in Windows) and when this happens, 
+  # assign 2 to done.
+  tkbind(tt,"<Destroy>",function() tclvalue(done)<-2)
+  
+  tclvars <- tclVar("")
+  entries <- tkentry(tt, textvariable=tclvars)
+  
+  doneVal <- as.integer(tclvalue(done))
+  results <- character()
+  
+  reset <- function() {
+    tclvalue(tclvars) <<- ""
+  }
+  reset.but <- tkbutton(tt, text="Reset", command=reset)
+  
+  cancel <- function() {
+    tclvalue(done) <- 2
+  }
+  cancel.but <- tkbutton(tt, text='Cancel', command=cancel)
+  
+  submit <- function() {
+    for(i in seq_along(vars)) {
+      tryCatch( {
+        results <<- tclvalue(tclvars)
+        tclvalue(done) <- 1
+      },
+      error = function(e) { tkmessageBox(message=geterrmessage()) },
+      finally = { }
+      )
+    }
+  }
+  submit.but <- tkbutton(tt, text="Submit", command=submit)
+  
+  tkgrid(tklabel(tt, text=labels), entries, pady=10, padx=10, columnspan=4)
+  
+  tkgrid(submit.but, cancel.but, reset.but, pady=10, padx=10, columnspan=3)
+  tkfocus(tt)
+  
+  # Do not proceed with the following code until the variable done is non-zero.
+  #   (But other processes can still run, i.e. the system is not frozen.)
+  tkwait.variable(done)
+  
+  if(tclvalue(done) != 1) {
+    results <- NULL
+  }
+  
+  tkdestroy(tt)
+  return(results)
+}
+
 #Seleziona il file di input dalla lista di file disponibili e lo ritorna
 select <- function(){
   writeLog("created 'select' variable (function).")
@@ -102,7 +170,6 @@ writeLog <- function(message){
 
 #Qua iniziano i comandi che vengono eseguiti appena richiamata la funzione
 #Controllo se la cartella dei log esiste ed eventualmente la creo
-outName <- "cazzen"
 if (!file.exists("logs")){
   dir.create(file.path("logs"))
 }
@@ -111,6 +178,11 @@ logName <- paste("Prova_", format(Sys.time(), format="%Y-%m-%d%H%M"), ".txt",sep
 logFile <- file.path("logs",logName)
 #Selezione file di input
 library('tcltk')
+outName <- entry("File :")
+if(is.null(outName) || outName == ""){
+  writeLog("ERROR: no output file selected")
+  stop()
+}
 rbVal <- ""
 writeLog("Created 'rbVal' variable.")
 input <- select()
