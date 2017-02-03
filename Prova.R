@@ -77,30 +77,44 @@ cerca <- function(specie, key){
                 "WHERE", 
                 " gpl.organism=", specie, " AND (gse.title LIKE '%", key, "%' OR gse.summary LIKE '%", key, "%');")
   writeLog("created 'query1' variable internal to the 'cerca' function.")
-  query2 <- paste("SELECT gse.gse ",
+  query2 <- paste("SELECT DISTINCT gse.gse ",
                 " FROM",
                 "  gsm JOIN gse_gsm ON gsm.gsm=gse_gsm.gsm",
                 "  JOIN gse ON gse_gsm.gse=gse.gse",
                 "  JOIN gse_gpl ON gse_gpl.gse=gse.gse",
                 "  JOIN gpl ON gse_gpl.gpl=gpl.gpl",
                 "WHERE", 
-                " gpl.organism=", specie, " AND (gse.title LIKE '%", key, "%' OR gse.summary LIKE '%", key, "%')",
-                " GROUP BY gse.gse;")
+                " gpl.organism=", specie, " AND (gse.title LIKE '%", key, "%' OR gse.summary LIKE '%", key, "%');")
+  localGsm <- dbGetQuery(con, query1)
+  localGse <- dbGetQuery(con, query2)
   if(key == inputArray[1]){
-    gsm <<- as.character(dbGetQuery(con, query1)) 
-    gse <<- dbGetQuery(con, query2)
+    if(localGsm == 0){
+		gse <<- "NA"
+	}
+	else{
+		localGse <- dbGetQuery(con, query2)
+		gse <<- localGse
+	}
+    gsm <<- as.character(localGsm) 
+    
   }
   else{
-    gsm <<- as.character(c(gsm, dbGetQuery(con, query1)))
-    gse <<- as.vector(c(gse, dbGetQuery(con, query2)))
+	if(localGsm == 0){
+		gse <<- c(gse, "NA")
+	}
+	else{
+		localGse <- dbGetQuery(con, query2)
+		gse <<- c(gse, localGse)
+	}
+    gsm <<- as.character(c(gsm, localGsm))
+    
   }
-  #gse <- dbGetQuery(con,"SELECT DISTINCT gse FROM gse WHERE title LIKE '%human%' AND title LIKE '%breast%' AND title LIKE '%cancer%';")
 }
 
 #Questa funzione scrive i risultati dello script in un file di output in un data.frame, per poi scriverli in un file di tipo csv
 writeOutput <- function(outputFile) {
   writeLog("created 'writeOutput' variable (function).")
-  writable <- data.frame(inputArray, gsm, gse)
+  writable <- data.frame(inputArray, gsm, as.character(gse))
   writeLog("created 'writable' variable internal to the 'writeOutput' function.")
   colnames(writable) <- c("Keywords", "Number of gsm ID", "gse ID")
   write.csv(writable, outputFile)
